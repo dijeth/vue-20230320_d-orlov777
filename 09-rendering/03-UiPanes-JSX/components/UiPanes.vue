@@ -1,4 +1,5 @@
-<script lang="jsx">
+<script lang="tsx">
+import { ref } from 'vue';
 import UiButton from './UiButton.vue';
 import VNode from './VNode.vue';
 
@@ -9,29 +10,53 @@ export default {
     UiButton,
   },
 
-  render() {
-    const vnodes = this.$slots.default();
-    return (
+  setup(_, { slots }) {
+    const vnodes = (slots.default && slots.default()) || [];
+
+    const panes = ref(
+      Array(vnodes.length)
+        .fill(0)
+        .map((_, i) => i),
+    );
+
+    /**
+     * Переместить i-ую панель вверх
+     *
+     * @param {number} i
+     */
+    const up = (i: number) => {
+      const temp = panes.value[i];
+      panes.value[i] = panes.value[i - 1];
+      panes.value[i - 1] = temp;
+    };
+
+    /**
+     * Переместить i-ую панель вниз
+     *
+     * @param {number} i
+     */
+    const down = (i: number) => {
+      const temp = panes.value[i];
+      panes.value[i] = panes.value[i + 1];
+      panes.value[i + 1] = temp;
+    };
+
+    return () => (
       <div class="panes">
-        {this.panes.map((it, i) => (
+        {panes.value.map((it, i) => (
           <div class="pane">
             <div class="pane__content">
               <VNode vnode={vnodes[it]}></VNode>
             </div>
             <div class="pane__controls">
-              <UiButton
-                class={i === 0 ? 'pane__disabled-button' : ''}
-                variant="secondary"
-                block
-                onClick={() => this.up(i)}
-              >
+              <UiButton class={i === 0 ? 'pane__disabled-button' : ''} variant="secondary" block onClick={() => up(i)}>
                 Up
               </UiButton>
               <UiButton
                 class={i === vnodes.length - 1 ? 'pane__disabled-button' : ''}
                 variant="danger"
                 block
-                onClick={() => this.down(i)}
+                onClick={() => down(i)}
               >
                 Down
               </UiButton>
@@ -40,44 +65,6 @@ export default {
         ))}
       </div>
     );
-  },
-
-  data() {
-    return {
-      /**
-       * Массив с текущим порядком номеров моделей, например
-       * [0, 1, 2]
-       * @type {number[]|null}
-       */
-      panes: Array(this.$slots.default().length)
-        .fill()
-        .map((_, i) => i),
-      // Сейчас здесь массив ровно из трёх элементов, но решение должно быть универсальным для любого количества узлов
-    };
-  },
-
-  methods: {
-    /**
-     * Переместить i-ую панель вверх
-     *
-     * @param {number} i
-     */
-    up(i) {
-      const temp = this.panes[i];
-      this.panes[i] = this.panes[i - 1];
-      this.panes[i - 1] = temp;
-    },
-
-    /**
-     * Переместить i-ую панель вниз
-     *
-     * @param {number} i
-     */
-    down(i) {
-      const temp = this.panes[i];
-      this.panes[i] = this.panes[i + 1];
-      this.panes[i + 1] = temp;
-    },
   },
 };
 </script>
